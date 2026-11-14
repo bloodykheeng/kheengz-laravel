@@ -1,0 +1,24 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/nesbot/carbon/extension.neon
+
+# A fresh app starts with no baseline: every file is held to level 5 from day one (GiftNest's
+# parked baseline came from code it inherited; there is none here).
+parameters:
+
+    # `database/` is not optional: seeders run outside both the request cycle and the test suite,
+    # and a bug there shows up as an empty database, not a failing test.
+    paths:
+        - app/
+        - database/
+        - routes/
+
+    level: 5
+
+    # PHPDoc is documentation, not a guarantee; runtime guards behind it are deliberate.
+    treatPhpDocTypesAsCertain: false
+
+    # Migrations are a linear history, never edited once applied.
+    excludePaths:
+        analyse:
+            - database/migrations/
