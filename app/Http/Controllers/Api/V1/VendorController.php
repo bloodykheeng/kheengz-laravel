@@ -64,7 +64,7 @@ class VendorController extends Controller
     {
         $this->authorize('view', $vendor);
 
-        return new VendorResource($vendor->load(['documents', 'shops', 'members.staffShops', 'approvedBy', 'createdBy', 'updatedBy'])->loadCount('shops'));
+        return new VendorResource($vendor->load(['documents', 'payoutDestinations', 'shops', 'members.staffShops', 'approvedBy', 'createdBy', 'updatedBy'])->loadCount('shops'));
     }
 
     /**

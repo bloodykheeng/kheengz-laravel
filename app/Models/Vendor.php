@@ -104,6 +104,12 @@ class Vendor extends Model implements HasSnapshotSchema
         return $this->hasMany(Shop::class);
     }
 
+    /** @return HasMany<PayoutDestination, $this> */
+    public function payoutDestinations(): HasMany
+    {
+        return $this->hasMany(PayoutDestination::class);
+    }
+
     /** @return HasMany<VendorDocument, $this> */
     public function documents(): HasMany
     {

@@ -36,6 +36,8 @@ class ShopResource extends JsonResource
                 'name' => $this->vendor->name,
                 'status' => $this->vendor->status,
             ]),
+            'payout_destination_id' => $this->payout_destination_id,
+            'payout_destination' => new PayoutDestinationResource($this->whenLoaded('payoutDestination')),
             'locations_count' => $this->whenCounted('locations'),
             'locations' => LocationResource::collection($this->whenLoaded('locations')),
             'reviews' => ShopReviewResource::collection($this->whenLoaded('reviews')),

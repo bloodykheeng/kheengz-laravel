@@ -39,6 +39,7 @@ class VendorResource extends JsonResource
             'missing_documents' => $this->whenLoaded('documents', fn () => array_map(fn ($t) => $t->value, VendorApprovals::missingDocuments($this->resource))),
 
             'documents' => VendorDocumentResource::collection($this->whenLoaded('documents')),
+            'payout_destinations' => PayoutDestinationResource::collection($this->whenLoaded('payoutDestinations')),
             'shops' => ShopResource::collection($this->whenLoaded('shops')),
             'members' => VendorMemberResource::collection($this->whenLoaded('members')),
             'approved_by' => new UserReferenceResource($this->whenLoaded('approvedBy')),

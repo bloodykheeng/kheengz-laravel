@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\PayoutDestinationStatus;
 use App\Enums\ShopStatus;
 use App\Enums\ShopType;
 use App\Http\Controllers\Controller;
@@ -68,6 +69,7 @@ class ShopController extends Controller
 
         return new ShopResource($shop->load([
             'vendor',
+            'payoutDestination',
             'locations' => fn ($q) => $q->orderByDesc('is_default')->orderBy('name'),
             'reviews' => fn ($q) => $q->with('createdBy')->latest('created_at')->latest('id'),
             'approvedBy', 'createdBy', 'updatedBy',
@@ -119,7 +121,13 @@ class ShopController extends Controller
         $this->authorize('update', $shop);
         $this->normalise($request);
 
-        $validated = $request->validate($this->detailRules($shop));
+        $validated = $request->validate([
+            ...$this->detailRules($shop),
+            // Where the money goes: one of the vendor's destinations that is not refused, the Owner's call.
+            'payout_destination_id' => ['sometimes', 'nullable', 'string', Rule::exists('payout_destinations', 'id')
+                ->where('vendor_id', $shop->vendor_id)->whereNot('status', PayoutDestinationStatus::Rejected->value)],
+        ]);
+        abort_if(array_key_exists('payout_destination_id', $validated) && ! $shop->vendor->isOwnedBy($request->user()), 403, 'Only an Owner chooses where a shop is paid.');
 
         if ($shop->approved_at !== null) {
             $shop->fill($validated);

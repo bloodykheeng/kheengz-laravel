@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\JobController;
 use App\Http\Controllers\Api\V1\LocationController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OtpPasswordResetController;
+use App\Http\Controllers\Api\V1\PayoutDestinationController;
 use App\Http\Controllers\Api\V1\PlatformSettingsController;
 use App\Http\Controllers\Api\V1\RolesAndPermissionsController;
 use App\Http\Controllers\Api\V1\ShopController;
@@ -118,6 +119,16 @@ Route::prefix('v1')->name('api.')->group(function () {
         Route::delete('vendor-documents/{document}', [VendorDocumentController::class, 'destroy'])->middleware('can:run shops')->name('vendor-documents.destroy');
         Route::get('vendor-documents/{document}/file', [VendorDocumentController::class, 'file'])->name('vendor-documents.file');
         Route::post('vendor-documents/{document}/check', [VendorDocumentController::class, 'check'])->middleware('can:manage vendors')->name('vendor-documents.check');
+
+        // Where a vendor's money goes (D12): Owners add and remove, reviewers decide on the ones waiting.
+        Route::get('payout-banks', [PayoutDestinationController::class, 'banks'])->middleware('can:run shops')->name('payout-banks.index');
+        Route::get('vendors/{vendor}/payout-destinations', [PayoutDestinationController::class, 'index'])->middleware('can:view,vendor')->name('payout-destinations.index');
+        Route::post('vendors/{vendor}/payout-destinations', [PayoutDestinationController::class, 'store'])->middleware('can:own,vendor')->name('payout-destinations.store');
+        Route::delete('payout-destinations/{destination}', [PayoutDestinationController::class, 'destroy'])->middleware('can:run shops')->name('payout-destinations.destroy');
+        Route::middleware('can:manage vendors')->group(function () {
+            Route::post('payout-destinations/{destination}/approve', [PayoutDestinationController::class, 'approve'])->name('payout-destinations.approve');
+            Route::post('payout-destinations/{destination}/reject', [PayoutDestinationController::class, 'reject'])->name('payout-destinations.reject');
+        });
 
         Route::get('vendors/{vendor}/members', [VendorMemberController::class, 'index'])->middleware('can:view,vendor')->name('vendor-members.index');
         Route::middleware('can:own,vendor')->group(function () {

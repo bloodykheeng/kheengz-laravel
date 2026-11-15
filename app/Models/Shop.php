@@ -60,6 +60,7 @@ class Shop extends Model implements HasSnapshotSchema
         'status_reason',
         'approved_at',
         'approved_by',
+        'payout_destination_id',
         'commission_bps',
         'debt_limit_amount',
         'debt_limit_days',
@@ -143,6 +144,12 @@ class Shop extends Model implements HasSnapshotSchema
     public function staff(): BelongsToMany
     {
         return $this->belongsToMany(User::class)->withTimestamps();
+    }
+
+    /** @return BelongsTo<PayoutDestination, $this> */
+    public function payoutDestination(): BelongsTo
+    {
+        return $this->belongsTo(PayoutDestination::class);
     }
 
     /** @return HasMany<Location, $this> */

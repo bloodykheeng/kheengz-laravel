@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\PayoutDestinationStatus;
 use App\Enums\ShopReviewDecision;
 use App\Enums\ShopStatus;
 use App\Enums\VendorStatus;
@@ -32,6 +33,10 @@ class ShopReviews
             throw ValidationException::withMessages(['status' => "Your vendor account is {$vendor->status->value}, so shops cannot be sent for review."]);
         }
 
+        if ($shop->payout_destination_id === null) {
+            throw ValidationException::withMessages(['payout_destination_id' => 'Choose where this shop is paid before sending it for review.']);
+        }
+
         $this->move($shop, [ShopStatus::Draft, ShopStatus::ChangesRequested], ShopStatus::PendingReview, ShopReviewDecision::Submitted, null, $by);
         $this->notifier->admins(new ShopSubmitted($shop), $by);
     }
@@ -41,6 +46,10 @@ class ShopReviews
     {
         if ($shop->vendor->status !== VendorStatus::Approved) {
             throw ValidationException::withMessages(['status' => 'Approve the vendor first: a shop sells only once the person behind it is verified.']);
+        }
+
+        if ($shop->payoutDestination?->status !== PayoutDestinationStatus::Verified) {
+            throw ValidationException::withMessages(['status' => 'Approve the shop\'s payout destination first: money must only go to an account we have checked.']);
         }
 
         $this->move($shop, [ShopStatus::PendingReview], ShopStatus::Active, ShopReviewDecision::Approved, null, $by, [
