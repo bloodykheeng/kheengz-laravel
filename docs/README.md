@@ -6,6 +6,7 @@ One topic per file, updated in the same change as the code it describes. The wor
 | Doc | What it covers | Came from |
 | --- | --- | --- |
 | [environment-setup.md](environment-setup.md) | Every `.env` value that needs an outside account | Kheengz |
+| [vendors-and-shops.md](vendors-and-shops.md) | Applying, papers, approval, shops and their review, members, locations, platform settings | Kheengz |
 | [visitor-origin.md](visitor-origin.md) | Country, region, IP and device on the audit trail and on orders | Kheengz |
 | [rate-limits.md](rate-limits.md) | Buyer limits per person, not per IP | GiftNest, rewritten |
 | [reference-numbers.md](reference-numbers.md) | Order and payout numbers from `SerialCounter`, never reused | Alpha |
