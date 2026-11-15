@@ -33,9 +33,14 @@ Two projects in the Firebase console, both under bloodykheeng's Google account:
 
 ## MarzPay
 
-Not wired yet (Phase 1). Kheengz's own account (bloodykheeng's, live since 15 Nov 2026) collects every online
-payment and pays vendors out (workspace D12). OlyCash is the second gateway (D15). API facts: workspace
-`docs/marzpay.md`.
+Kheengz's own account (bloodykheeng's, live since 15 Nov 2026) collects every online payment and pays vendors
+out (workspace D12). OlyCash is the second gateway (D15). API facts: workspace `docs/marzpay.md`.
+
+- `MARZPAY_API_KEY`, `MARZPAY_API_SECRET`: Business account > API keys. `MARZPAY_BASE_URL` is the same for
+  sandbox and live (the account's mode decides).
+- Whitelist the server's public IP in the MarzPay dashboard: bank checks and payouts are refused otherwise.
+- Used so far for checking vendors' bank accounts (`App\Payments\MarzPay\MarzPayClient`). With the keys empty,
+  bank accounts are saved for the Admin to check by hand, and nothing fails.
 
 ## Reverb
 

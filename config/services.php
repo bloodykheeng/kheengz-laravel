@@ -44,6 +44,16 @@ return [
         'batch_size' => (int) env('SMS_BATCH_SIZE', 100),
     ],
 
+    // MarzPay (docs: workspace docs/marzpay.md). One base URL for sandbox and live: the account's
+    // mode decides. HTTP Basic with the key and secret (their OpenAPI spec). Bank and payout calls
+    // need the server's IP whitelisted in the MarzPay dashboard. Read only by the MarzPay client.
+    'marzpay' => [
+        'base_url' => env('MARZPAY_BASE_URL', 'https://wallet.wearemarz.com/api/v1'),
+        'api_key' => env('MARZPAY_API_KEY'),
+        'api_secret' => env('MARZPAY_API_SECRET'),
+        'timeout' => (int) env('MARZPAY_TIMEOUT', 20),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
