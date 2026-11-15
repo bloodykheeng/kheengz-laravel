@@ -56,6 +56,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Frontend URL
+    |--------------------------------------------------------------------------
+    |
+    | Where a person signs in: the Next app, on its own host. `url` above is
+    | this API, so a sign-in button built from it would send someone to a
+    | server that answers JSON. Every email deep link is built from this one.
+    |
+    */
+
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
@@ -66,6 +79,21 @@ return [
     */
 
     'timezone' => 'UTC',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Business Timezone
+    |--------------------------------------------------------------------------
+    |
+    | The one calendar Kheengz's days are counted on: charts, statements, date
+    | filters and "today". Timestamps are still STORED in UTC (see 'timezone');
+    | a user's own `timezone` is for display only. Read through
+    | App\Support\BusinessDate, never as a zone written in code. Same rules as
+    | Alpha and SDS: docs/timezone-handling.md.
+    |
+    */
+
+    'business_timezone' => env('BUSINESS_TIMEZONE', 'Africa/Kampala'),
 
     /*
     |--------------------------------------------------------------------------
