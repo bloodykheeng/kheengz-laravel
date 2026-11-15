@@ -36,7 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // Public routes that must still recognise a signed-in staff member.
-        // See docs/public-endpoints-and-optional-auth.md.
+        // GiftNest's docs/public-endpoints-and-optional-auth.md; Kheengz writes its own with the storefront.
         //
         // `permission` is Spatie's own, aliased here because Laravel's `can:`
         // takes exactly one ability and a route may legitimately accept either

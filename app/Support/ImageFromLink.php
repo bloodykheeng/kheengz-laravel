@@ -14,7 +14,7 @@ use Throwable;
 /**
  * A photo given as a link (a shop's product picture) instead of an upload. We download it once and keep our
  * own copy on the public disk, exactly where an upload lands, so the page never depends on the other site:
- * a site that renames, removes or blocks the image cannot break a live product page (docs/photos-from-links.md).
+ * a site that renames, removes or blocks the image cannot break a live product page (GiftNest's docs/photos-from-links.md; Kheengz writes its own with products).
  *
  * Fetching a URL someone typed is a classic server-side request forgery hole, so: http(s) only, the host
  * (and every redirect's host) must resolve to public addresses, three redirects at most, 20 seconds, 20 MB,

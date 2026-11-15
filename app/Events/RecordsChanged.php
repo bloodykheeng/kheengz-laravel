@@ -20,7 +20,7 @@ use Throwable;
  * Broadcast NOW, not queued: it is a few bytes, and behind the queue it waited for every email
  * and notification job ahead of it, so the other laptop showed "Waiting for an answer" long after
  * the answer. With Reverb down the send fails quietly (reported) and the action still succeeds;
- * screens also refetch on focus. See docs/realtime-queues-notifications.md.
+ * screens also refetch on focus. The web side: kheengz-nextjs lib/liveRecords.ts.
  */
 class RecordsChanged implements ShouldBroadcastNow, ShouldDispatchAfterCommit
 {
