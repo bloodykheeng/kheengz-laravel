@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
@@ -21,6 +22,8 @@ use Spatie\Permission\Traits\HasRoles;
  * Buyers are never users: they order with a phone number and no account (workspace D12, D26).
  * What a person may do in ONE shop is their `vendor_users` role (Owner / Staff), arriving with
  * the vendors module in Phase 1, never the account role.
+ *
+ * @property-read VendorUser|null $membership Set on a vendor's members (Vendor::members)
  */
 class User extends Authenticatable implements HasSnapshotSchema
 {
@@ -227,5 +230,26 @@ class User extends Authenticatable implements HasSnapshotSchema
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * The vendors this account works for, with its place in each (Owner or Staff, D26).
+     *
+     * @return BelongsToMany<Vendor, $this, VendorUser, 'membership'>
+     */
+    public function vendors(): BelongsToMany
+    {
+        return $this->belongsToMany(Vendor::class, 'vendor_users')->using(VendorUser::class)->as('membership')->withPivot('role', 'created_by')->withTimestamps();
+    }
+
+    /**
+     * The shops this account was given as a vendor's Staff (an Owner runs all of its vendor's shops:
+     * Shop::scopeRunBy).
+     *
+     * @return BelongsToMany<Shop, $this>
+     */
+    public function staffShops(): BelongsToMany
+    {
+        return $this->belongsToMany(Shop::class)->withTimestamps();
     }
 }

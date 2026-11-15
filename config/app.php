@@ -69,6 +69,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Shops Domain
+    |--------------------------------------------------------------------------
+    |
+    | Each marketplace shop lives at `<slug>.<shops_domain>` (D26): homenest.kheengz.com.
+    | Read through App\Models\Shop::address(), never joined by hand. The single
+    | vendor edition has one shop on the whole site and does not use it.
+    |
+    */
+
+    'shops_domain' => env('SHOPS_DOMAIN', 'kheengz.com'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
