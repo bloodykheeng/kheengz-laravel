@@ -32,9 +32,17 @@ class RolesAndPermissionsSeeder extends Seeder
     {
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $staff = [];
+        // The platform's helpers: they see vendors and shops; deciding on them is the Admin's
+        // until the Admin gives Staff `manage vendors` on the Roles screen.
+        $staff = [
+            'view vendors',
+        ];
 
-        $vendor = [];
+        // A vendor's people (Owner or Staff of a vendor, D26): their own vendor and shops only,
+        // narrowed further by VendorPolicy and ShopPolicy.
+        $vendor = [
+            'run shops',
+        ];
 
         // Everything, including the setup only the owner of the installation may touch.
         $admin = [
@@ -47,6 +55,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view queue',
             'manage queue',
             'manage settings',
+            'manage vendors',
         ];
 
         $rolesWithPermissions = [

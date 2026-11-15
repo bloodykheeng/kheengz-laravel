@@ -6,10 +6,19 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\EmailTestController;
 use App\Http\Controllers\Api\V1\EmailVerificationController;
 use App\Http\Controllers\Api\V1\JobController;
+use App\Http\Controllers\Api\V1\LocationController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OtpPasswordResetController;
+use App\Http\Controllers\Api\V1\PlatformSettingsController;
 use App\Http\Controllers\Api\V1\RolesAndPermissionsController;
+use App\Http\Controllers\Api\V1\ShopController;
+use App\Http\Controllers\Api\V1\ShopReviewController;
 use App\Http\Controllers\Api\V1\UserController;
+use App\Http\Controllers\Api\V1\VendorApplicationController;
+use App\Http\Controllers\Api\V1\VendorController;
+use App\Http\Controllers\Api\V1\VendorDocumentController;
+use App\Http\Controllers\Api\V1\VendorMemberController;
+use App\Http\Controllers\Api\V1\VendorReviewController;
 use Illuminate\Support\Facades\Route;
 
 // The foundation copied from GiftNest (workspace WORK-PLAN Phase 0). Each Phase 1 module (shops,
@@ -25,6 +34,9 @@ Route::prefix('v1')->name('api.')->group(function () {
         Route::post('auth/otp/request', [OtpPasswordResetController::class, 'requestOtp'])->name('auth.otp.request');
         Route::post('auth/otp/validate', [OtpPasswordResetController::class, 'validateOtp'])->name('auth.otp.validate');
         Route::post('auth/otp/reset-password', [OtpPasswordResetController::class, 'resetPassword'])->name('auth.otp.reset-password');
+
+        // "Sell on Kheengz": a new account and a Pending vendor (docs/vendors-and-shops.md).
+        Route::post('vendor-applications', [VendorApplicationController::class, 'store'])->name('vendor-applications.store');
     });
     // A new code at most every 20 seconds or so per address, so the inbox is not flooded.
     Route::post('auth/email/resend', [EmailVerificationController::class, 'resend'])->middleware('throttle:3,1')->name('auth.email.resend');
@@ -85,6 +97,61 @@ Route::prefix('v1')->name('api.')->group(function () {
                 Route::delete('failed/bulk/delete', [JobController::class, 'bulkDestroyFailedJobs'])->name('failed.bulk-destroy');
             });
         });
+
+        // ── Vendors and shops (D31, D35; docs/vendors-and-shops.md) ─────────────
+        // Reviewers (`view vendors`, `manage vendors`) reach every vendor and shop; a vendor's
+        // people (`run shops`) only their own. The `can:` names the policy; the policy decides whose.
+        Route::get('vendors', [VendorController::class, 'index'])->middleware('can:viewAny,App\Models\Vendor')->name('vendors.index');
+        Route::get('vendors/{vendor}', [VendorController::class, 'show'])->middleware('can:view,vendor')->name('vendors.show');
+        Route::put('vendors/{vendor}', [VendorController::class, 'update'])->middleware('can:own,vendor')->name('vendors.update');
+        Route::post('vendors/{vendor}/resubmit', [VendorController::class, 'resubmit'])->middleware('can:own,vendor')->name('vendors.resubmit');
+
+        Route::middleware('can:review,vendor')->group(function () {
+            Route::post('vendors/{vendor}/approve', [VendorReviewController::class, 'approve'])->name('vendors.approve');
+            Route::post('vendors/{vendor}/reject', [VendorReviewController::class, 'reject'])->name('vendors.reject');
+            Route::post('vendors/{vendor}/suspend', [VendorReviewController::class, 'suspend'])->name('vendors.suspend');
+            Route::post('vendors/{vendor}/reinstate', [VendorReviewController::class, 'reinstate'])->name('vendors.reinstate');
+        });
+
+        Route::post('vendors/{vendor}/documents', [VendorDocumentController::class, 'store'])->middleware('can:own,vendor')->name('vendor-documents.store');
+        // Who may delete or read a paper depends on its vendor: decided in the controller.
+        Route::delete('vendor-documents/{document}', [VendorDocumentController::class, 'destroy'])->middleware('can:run shops')->name('vendor-documents.destroy');
+        Route::get('vendor-documents/{document}/file', [VendorDocumentController::class, 'file'])->name('vendor-documents.file');
+        Route::post('vendor-documents/{document}/check', [VendorDocumentController::class, 'check'])->middleware('can:manage vendors')->name('vendor-documents.check');
+
+        Route::get('vendors/{vendor}/members', [VendorMemberController::class, 'index'])->middleware('can:view,vendor')->name('vendor-members.index');
+        Route::middleware('can:own,vendor')->group(function () {
+            Route::post('vendors/{vendor}/members', [VendorMemberController::class, 'store'])->name('vendor-members.store');
+            Route::put('vendors/{vendor}/members/{user}', [VendorMemberController::class, 'update'])->name('vendor-members.update');
+            Route::delete('vendors/{vendor}/members/{user}', [VendorMemberController::class, 'destroy'])->name('vendor-members.destroy');
+        });
+
+        Route::get('shops', [ShopController::class, 'index'])->middleware('can:viewAny,App\Models\Shop')->name('shops.index');
+        Route::get('shops/slug-availability', [ShopController::class, 'slugAvailability'])->middleware('can:run shops')->name('shops.slug-availability');
+        Route::post('vendors/{vendor}/shops', [ShopController::class, 'store'])->middleware('can:own,vendor')->name('shops.store');
+        Route::get('shops/{shop}', [ShopController::class, 'show'])->middleware('can:view,shop')->name('shops.show');
+        Route::put('shops/{shop}', [ShopController::class, 'update'])->middleware('can:update,shop')->name('shops.update');
+        Route::post('shops/{shop}/submit', [ShopController::class, 'submit'])->middleware('can:own,shop')->name('shops.submit');
+        Route::post('shops/{shop}/close', [ShopController::class, 'close'])->middleware('can:own,shop')->name('shops.close');
+
+        Route::middleware('can:review,shop')->group(function () {
+            Route::post('shops/{shop}/approve', [ShopReviewController::class, 'approve'])->name('shops.approve');
+            Route::post('shops/{shop}/request-changes', [ShopReviewController::class, 'requestChanges'])->name('shops.request-changes');
+            Route::post('shops/{shop}/reject', [ShopReviewController::class, 'reject'])->name('shops.reject');
+            Route::post('shops/{shop}/suspend', [ShopReviewController::class, 'suspend'])->name('shops.suspend');
+            Route::post('shops/{shop}/reinstate', [ShopReviewController::class, 'reinstate'])->name('shops.reinstate');
+        });
+
+        Route::get('shops/{shop}/locations', [LocationController::class, 'index'])->middleware('can:view,shop')->name('locations.index');
+        Route::middleware('can:update,shop')->group(function () {
+            Route::post('shops/{shop}/locations', [LocationController::class, 'store'])->name('locations.store');
+            Route::put('shops/{shop}/locations/{location}', [LocationController::class, 'update'])->name('locations.update');
+            Route::delete('shops/{shop}/locations/{location}', [LocationController::class, 'destroy'])->name('locations.destroy');
+        });
+
+        // Platform settings (D23, D28, D34)
+        Route::get('platform-settings', [PlatformSettingsController::class, 'show'])->middleware('can:manage settings')->name('platform-settings.show');
+        Route::put('platform-settings', [PlatformSettingsController::class, 'update'])->middleware('can:manage settings')->name('platform-settings.update');
 
         // Activity Logs
         Route::get('activity-logs', [ActivityLogsController::class, 'index'])->middleware('can:view activity logs')->name('activity-logs.index');
