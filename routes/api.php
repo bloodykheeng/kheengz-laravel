@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Controllers\Api\V1\ActivityLogsController;
 use App\Http\Controllers\Api\V1\AuthCheckController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\EmailTestController;
 use App\Http\Controllers\Api\V1\EmailVerificationController;
+use App\Http\Controllers\Api\V1\JobController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OtpPasswordResetController;
 use App\Http\Controllers\Api\V1\RolesAndPermissionsController;
 use App\Http\Controllers\Api\V1\UserController;
@@ -33,6 +36,15 @@ Route::prefix('v1')->name('api.')->group(function () {
         Route::post('auth/profile', [AuthCheckController::class, 'updateProfile'])->name('auth.profile.update');
         Route::get('auth/check-app-status', [AuthCheckController::class, 'appStatus'])->name('auth.check-app-status');
 
+        // The bell: always the caller's own notices, so no permission to hold.
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/', [NotificationController::class, 'index'])->name('index');
+            Route::get('unread-count', [NotificationController::class, 'unreadCount'])->name('unread-count');
+            Route::post('read-all', [NotificationController::class, 'markAllRead'])->name('read-all');
+            Route::post('{id}/read', [NotificationController::class, 'markRead'])->name('read');
+            Route::delete('{id}', [NotificationController::class, 'destroy'])->name('destroy');
+        });
+
         // Email testing
         Route::post('email-test/send', [EmailTestController::class, 'testEmail'])->middleware('can:manage settings')->name('email-test.send');
 
@@ -59,5 +71,23 @@ Route::prefix('v1')->name('api.')->group(function () {
             Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
             Route::post('users/{user}/verification-code', [UserController::class, 'resendVerification'])->name('users.verification-code');
         });
+
+        // Queue Jobs
+        Route::prefix('jobs')->name('jobs.')->group(function () {
+            Route::middleware('can:view queue')->group(function () {
+                Route::get('/', [JobController::class, 'getQueuedJobs'])->name('queued');
+                Route::get('stats', [JobController::class, 'getJobStats'])->name('stats');
+                Route::get('failed', [JobController::class, 'getFailedJobs'])->name('failed');
+            });
+
+            Route::middleware('can:manage queue')->group(function () {
+                Route::delete('bulk/delete', [JobController::class, 'bulkDestroyJobs'])->name('bulk-destroy');
+                Route::delete('failed/bulk/delete', [JobController::class, 'bulkDestroyFailedJobs'])->name('failed.bulk-destroy');
+            });
+        });
+
+        // Activity Logs
+        Route::get('activity-logs', [ActivityLogsController::class, 'index'])->middleware('can:view activity logs')->name('activity-logs.index');
+        Route::delete('activity-logs/bulk/delete', [ActivityLogsController::class, 'bulkDestroy'])->middleware('can:manage settings')->name('activity-logs.bulk-destroy');
     });
 });
