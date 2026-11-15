@@ -6,6 +6,7 @@
  */
 
 use App\Enums\VendorMemberRole;
+use App\Models\PayoutDestination;
 use App\Models\Shop;
 use App\Models\User;
 use App\Models\Vendor;
@@ -85,6 +86,11 @@ it('runs a shop from Draft through review to open, telling each side', function 
     $shop->locations()->create(['name' => 'Main shop', 'address' => 'Kikuubo', 'area' => 'Kikuubo', 'is_default' => true]);
 
     $this->actingAs($owner, 'sanctum');
+    // No payout destination yet: it cannot go for review.
+    $this->postJson("/api/v1/shops/{$shop->id}/submit")->assertUnprocessable()->assertJsonValidationErrors('payout_destination_id');
+    $destination = PayoutDestination::factory()->for($vendor)->awaitingReview()->create();
+    $this->putJson("/api/v1/shops/{$shop->id}", ['payout_destination_id' => $destination->id])->assertOk();
+
     $this->postJson("/api/v1/shops/{$shop->id}/submit")->assertOk()->assertJsonPath('data.status', 'Pending review');
     Notification::assertSentTo($admin, ShopSubmitted::class);
 
@@ -101,6 +107,9 @@ it('runs a shop from Draft through review to open, telling each side', function 
     $this->postJson("/api/v1/shops/{$shop->id}/submit")->assertOk();
 
     $this->actingAs($admin, 'sanctum');
+    // Money only to a checked account: the destination is decided first.
+    $this->postJson("/api/v1/shops/{$shop->id}/approve")->assertUnprocessable()->assertJsonValidationErrors('status');
+    $this->postJson("/api/v1/payout-destinations/{$destination->id}/approve")->assertOk();
     $this->postJson("/api/v1/shops/{$shop->id}/approve")->assertOk()->assertJsonPath('data.status', 'Active');
 
     expect($shop->fresh()->isSelling())->toBeTrue()
