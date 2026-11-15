@@ -6,19 +6,37 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
+            $table->ulid('id')->primary();
+            $table->string('name')->index();
+
+            // Any one of these signs a person in. Each is nullable and unique
+            // (MySQL permits many nulls in a unique index); that at least one
+            // is present is the API's rule, not the schema's.
+            $table->string('username')->nullable()->unique();
+            $table->string('email')->nullable()->unique();
+            $table->string('phone')->nullable()->unique();
+            $table->string('password')->nullable();
+
+            $table->boolean('allow_notifications')->default(true);
+            $table->string('status')->default('Active')->index();
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->timestamp('lastlogin')->nullable();
+            // When a vendor who signed themselves up agreed to the Terms and the Privacy Policy.
+            $table->timestamp('terms_accepted_at')->nullable();
+            $table->string('photo_url')->nullable();
+            $table->string('photo_source', 20)->nullable();        // PhotoSource; null with no photo
+            $table->string('photo_source_url', 2048)->nullable();  // the link a Link photo was copied from
+            $table->string('timezone')->nullable()->default('Africa/Kampala');
             $table->rememberToken();
             $table->timestamps();
+            $table->ulid('created_by')->nullable();
+            $table->ulid('updated_by')->nullable();
+
+            $table->foreign('created_by')->references('id')->on('users')->onDelete('restrict');
+            $table->foreign('updated_by')->references('id')->on('users')->onDelete('restrict');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
@@ -29,7 +47,7 @@ return new class extends Migration
 
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
+            $table->foreignUlid('user_id')->nullable()->index();
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->longText('payload');
@@ -37,13 +55,10 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
+        Schema::dropIfExists('password_reset_tokens');
+        Schema::dropIfExists('users');
     }
 };
