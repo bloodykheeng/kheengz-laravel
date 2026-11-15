@@ -28,6 +28,22 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // Bulk SMS (from GiftNest). `driver`:
+    //   log      nothing leaves the server; each message is written to the log
+    //            and recorded as Sent. For local development and demos.
+    //   gateway  the GET-with-query bulk gateway Alpha and SDS use. With
+    //            SMS_API_URL blank every message is recorded as Failed with
+    //            "SMS gateway is not configured", never lost silently.
+    'sms' => [
+        'driver' => env('SMS_DRIVER', 'log'),
+        'url' => env('SMS_API_URL'),
+        'account_id' => env('SMS_ACCOUNT_ID'),
+        'auth_code' => env('SMS_AUTH_CODE'),
+        'sender' => env('SMS_SENDER'),
+        // Numbers per queued batch job.
+        'batch_size' => (int) env('SMS_BATCH_SIZE', 100),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

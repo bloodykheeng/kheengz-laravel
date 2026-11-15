@@ -115,4 +115,10 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    | Where people can write back. Every email's footer shows it, because the
+    | from-address above is a no-reply box nobody reads.
+    */
+    'support_address' => env('MAIL_SUPPORT_ADDRESS', 'hello@kheengz.com'),
+
 ];

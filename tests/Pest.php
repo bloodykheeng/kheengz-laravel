@@ -1,50 +1,44 @@
 <?php
 
+use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /*
-|--------------------------------------------------------------------------
-| Test Case
-|--------------------------------------------------------------------------
-|
-| The closure you provide to your test functions is always bound to a specific PHPUnit test
-| case class. By default, that class is "PHPUnit\Framework\TestCase". Of course, you may
-| need to change it using the "pest()" function to bind different classes or traits.
-|
+| Every Feature test runs on a fresh database (RefreshDatabase) through Laravel's TestCase.
 */
 
 pest()->extend(TestCase::class)
- // ->use(RefreshDatabase::class)
+    ->use(RefreshDatabase::class)
     ->in('Feature');
 
-/*
-|--------------------------------------------------------------------------
-| Expectations
-|--------------------------------------------------------------------------
-|
-| When you're writing tests, you often need to check that values meet certain conditions. The
-| "expect()" function gives you access to a set of "expectations" methods that you can use
-| to assert different things. Of course, you may extend the Expectation API at any time.
-|
-*/
-
-expect()->extend('toBeOne', function () {
-    return $this->toBe(1);
-});
-
-/*
-|--------------------------------------------------------------------------
-| Functions
-|--------------------------------------------------------------------------
-|
-| While Pest is very powerful out-of-the-box, you may have some testing code specific to your
-| project that you don't want to repeat in every file. Here you can also expose helpers as
-| global functions to help you to reduce the number of lines of code in your test files.
-|
-*/
-
-function something()
+/**
+ * A signed-in Admin, holding every permission.
+ *
+ * The real `RolesAndPermissionsSeeder` runs rather than a hand-written list, so a permission
+ * renamed there without the matching `can:` on the route shows up here as a 403 instead of
+ * passing against a stale fixture. Sanctum's `actingAs` is used rather than a real token:
+ * these tests are about what the endpoints return, not how the token is minted.
+ */
+function actingAsAdmin(): User
 {
-    // ..
+    return actingAsRole('Admin');
+}
+
+/**
+ * A signed-in user holding one role (Admin, Staff or Vendor), with the real seeder behind it.
+ */
+function actingAsRole(string $role): User
+{
+    // Through the test helper, not `new ...->run()`: the seeder reports progress on
+    // `$this->command`, which only Artisan sets. Idempotent, so calling it again costs nothing.
+    test()->seed(RolesAndPermissionsSeeder::class);
+
+    $user = User::factory()->create();
+    $user->assignRole($role);
+
+    test()->actingAs($user, 'sanctum');
+
+    return $user;
 }
