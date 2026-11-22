@@ -39,6 +39,8 @@ out (workspace D12). OlyCash is the second gateway (D15). API facts: workspace `
 - `MARZPAY_API_KEY`, `MARZPAY_API_SECRET`: Business account > API keys. `MARZPAY_BASE_URL` is the same for
   sandbox and live (the account's mode decides).
 - Whitelist the server's public IP in the MarzPay dashboard: bank checks and payouts are refused otherwise.
+- Then run `php artisan marzpay:check`: one read (the bank list) that confirms the keys (HTTP Basic) and the
+  whitelisted IP, or says which one is wrong.
 - Used so far for checking vendors' bank accounts (`App\Payments\MarzPay\MarzPayClient`). With the keys empty,
   bank accounts are saved for the Admin to check by hand, and nothing fails.
 

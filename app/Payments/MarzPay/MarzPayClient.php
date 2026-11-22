@@ -14,8 +14,10 @@ use Illuminate\Support\Facades\Http;
  * step needs are here; collections and payouts join it with step 6, behind the PaymentGateway
  * interface. Every MarzPay call in the app goes through this class.
  *
- * Auth is HTTP Basic with the key and secret, as their OpenAPI spec says. Their bank-transfer page
- * shows an `X-API-Key` header instead: marked "Check" in docs/marzpay.md until the first live call.
+ * Auth is HTTP Basic with the key and secret on every endpoint, bank transfers included: their OpenAPI
+ * spec sets `security: BasicAuth` globally with no exception, as does their main docs page. One example on
+ * their bank-transfer page shows an `X-API-Key` header; the spec wins (docs/marzpay.md §1).
+ * `php artisan marzpay:check` proves the keys and the server's IP with one read.
  */
 class MarzPayClient
 {

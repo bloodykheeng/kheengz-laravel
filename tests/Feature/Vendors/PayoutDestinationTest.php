@@ -137,3 +137,32 @@ it('matches names the way banks print them', function (string $account, bool $ma
     ['Home Depot Ltd', false],
     ['Peter Okello', false],
 ]);
+
+it('asks MarzPay with HTTP Basic auth, as its OpenAPI spec says for every endpoint', function () {
+    Http::fake(['*/bank-transfer/validate' => Http::response(['status' => 'success', 'data' => [
+        'account_number' => '60001256421', 'bank_name' => 'Equity Bank', 'bank_code' => 'EQU',
+        'account_name' => 'HOME NEST LTD', 'valid' => true, 'status_code' => 0,
+    ]])]);
+
+    addDestination(['method' => 'Bank', 'bank_name' => 'Equity Bank', 'account_number' => '60001256421', 'account_name' => 'Home Nest Ltd'])->assertCreated();
+
+    Http::assertSent(fn ($request) => $request->hasHeader('Authorization', 'Basic '.base64_encode('key:secret'))
+        && ! $request->hasHeader('X-API-Key'));
+});
+
+it('never refuses a vendor\'s bank account because MarzPay refused us', function (int $status) {
+    Http::fake(['*/bank-transfer/validate' => Http::response(['status' => 'error', 'message' => 'Unauthenticated.'], $status)]);
+
+    addDestination(['method' => 'Bank', 'bank_name' => 'Equity Bank', 'account_number' => '60001256421', 'account_name' => 'Home Nest Ltd'])
+        ->assertCreated()
+        ->assertJsonPath('data.status', 'Awaiting review');
+})->with(['wrong keys' => 401, 'IP not whitelisted' => 403]);
+
+it('checks the keys from the command line with one read', function () {
+    Http::fake(['*/bank-transfer/banks' => Http::sequence()
+        ->push(['status' => 'success', 'data' => ['banks' => [['code' => 'EQU', 'name' => 'Equity Bank', 'aliases' => []]], 'count' => 1]])
+        ->push(['message' => 'Forbidden'], 403)]);
+
+    $this->artisan('marzpay:check')->expectsOutputToContain('1 banks can be checked and paid')->assertSuccessful();
+    $this->artisan('marzpay:check')->expectsOutputToContain('not whitelisted')->assertFailed();
+});
