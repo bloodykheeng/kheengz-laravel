@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\V1\RolesAndPermissionsController;
 use App\Http\Controllers\Api\V1\ShopController;
 use App\Http\Controllers\Api\V1\ShopReviewController;
 use App\Http\Controllers\Api\V1\ShopSectionController;
+use App\Http\Controllers\Api\V1\StockController;
 use App\Http\Controllers\Api\V1\UnitController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\VendorApplicationController;
@@ -218,6 +219,12 @@ Route::prefix('v1')->name('api.')->group(function () {
             Route::put('products/{product}/photos/{photo}', [ProductPhotoController::class, 'update'])->name('product-photos.update');
             Route::delete('products/{product}/photos/{photo}', [ProductPhotoController::class, 'destroy'])->name('product-photos.destroy');
         });
+        // ── Stock (D5, D33; docs/stock.md) ──────────────────────────────────────
+        Route::get('products/{product}/stock', [StockController::class, 'show'])->middleware('can:view,product')->name('stock.show');
+        Route::get('products/{product}/stock/movements', [StockController::class, 'movements'])->middleware('can:view,product')->name('stock.movements');
+        Route::post('products/{product}/stock', [StockController::class, 'store'])->middleware('can:update,product')->name('stock.store');
+        Route::get('shops/{shop}/stock', [StockController::class, 'shop'])->middleware('can:view,shop')->name('stock.shop');
+
         // Kheengz takes a product down, or allows it again (D35).
         Route::middleware('can:moderate,product')->group(function () {
             Route::post('products/{product}/block', [ProductController::class, 'block'])->name('products.block');

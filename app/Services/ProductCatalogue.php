@@ -13,8 +13,10 @@ use App\Models\ProductOptionValue;
 use App\Models\ProductPhoto;
 use App\Models\ProductVariant;
 use App\Models\Shop;
+use App\Models\StockMovement;
 use App\Models\Unit;
 use App\Models\User;
+use App\Support\Quantity;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -79,6 +81,10 @@ class ProductCatalogue
         DB::transaction(function () use ($product) {
             $product->photos()->get()->each->delete(); // each, so the files go too
             $variantIds = $product->variants()->pluck('id');
+            // A draft's stock history goes with it (the audit entry keeps the product); none is on hand
+            // by then, Product::isDeletable sees to that.
+            DB::table('stock_movements')->whereIn('product_variant_id', $variantIds)->delete();
+            DB::table('stock_levels')->whereIn('product_variant_id', $variantIds)->delete();
             DB::table('price_breaks')->whereIn('product_variant_id', $variantIds)->delete();
             DB::table('product_variant_option_value')->whereIn('product_variant_id', $variantIds)->delete();
             $product->variants()->delete();
@@ -354,6 +360,8 @@ class ProductCatalogue
                 'weight_grams' => isset($row['weight_grams']) ? (int) $row['weight_grams'] : null,
                 'position' => $position,
                 'is_active' => (bool) ($row['is_active'] ?? true),
+                'track_stock' => (bool) ($row['track_stock'] ?? true),
+                'low_stock_at' => isset($row['low_stock_at']) ? Quantity::tidy($row['low_stock_at']) : null,
             ])->save();
             $variant->optionValues()->sync($ids);
 
@@ -367,6 +375,11 @@ class ProductCatalogue
         $gone = $existing->whereNotIn('id', $kept);
         if ($gone->isNotEmpty()) {
             $goneIds = $gone->pluck('id')->all();
+            // Stock was recorded against it: its history stays, so it is turned off, not removed.
+            $recorded = $gone->first(fn (ProductVariant $v) => StockMovement::query()->where('product_variant_id', $v->id)->exists());
+            if ($recorded) {
+                $this->fail('variants', 'Stock was recorded for '.($recorded->label() ?: 'this variant').', so it stays. Keep it and switch off Offered instead.');
+            }
             ProductPhoto::query()->whereIn('product_variant_id', $goneIds)->update(['product_variant_id' => null]);
             DB::table('product_variant_option_value')->whereIn('product_variant_id', $goneIds)->delete();
             DB::table('price_breaks')->whereIn('product_variant_id', $goneIds)->delete();

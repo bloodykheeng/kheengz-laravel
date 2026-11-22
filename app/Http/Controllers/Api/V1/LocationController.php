@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\LocationResource;
 use App\Models\Location;
 use App\Models\Shop;
+use App\Models\StockMovement;
 use App\Rules\PhoneNumber;
 use App\Support\Phone;
 use App\Traits\LoggableTrait;
@@ -77,6 +78,8 @@ class LocationController extends Controller
         $this->authorize('update', $shop);
         abort_unless($location->shop_id === $shop->id, 404);
         abort_if($location->is_default, 422, 'This is the default location. Make another one the default first.');
+        // Its stock history must stay explainable (docs/stock.md): a location that ever held stock stays.
+        abort_if(StockMovement::query()->where('location_id', $location->id)->exists(), 422, 'Stock has been kept here, so its history stays. Move what is left to another location; it can stay unused.');
 
         $snapshot = $this->buildModelSnapshot($location);
         $location->delete();

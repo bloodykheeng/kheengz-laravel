@@ -48,6 +48,9 @@ class ProductResource extends JsonResource
             'min_price' => $this->whenAggregated('variants', 'price', 'min'),
             'max_price' => $this->whenAggregated('variants', 'price', 'max'),
             'variants_count' => $this->whenCounted('variants'),
+            // On hand minus held, over every location, of the variants whose stock is counted.
+            'stock_available' => $this->when($this->getAttribute('stock_available') !== null, fn () => (float) $this->getAttribute('stock_available')),
+            'tracked_variants_count' => $this->whenCounted('trackedVariants'),
             'photos_count' => $this->whenCounted('photos'),
 
             'section_ids' => $this->whenLoaded('sections', fn () => $this->sections->pluck('id')->values()),
@@ -78,6 +81,8 @@ class ProductResource extends JsonResource
                 'compare_at_price' => $v->compare_at_price,
                 'weight_grams' => $v->weight_grams,
                 'is_active' => $v->is_active,
+                'track_stock' => $v->track_stock,
+                'low_stock_at' => $v->low_stock_at === null ? null : (float) $v->low_stock_at,
                 'price_breaks' => $v->priceBreaks->map(fn (PriceBreak $b) => ['min_quantity' => (float) $b->min_quantity, 'unit_price' => $b->unit_price])->values(),
             ])->values()),
             'photos' => ProductPhotoResource::collection($this->whenLoaded('photos')),

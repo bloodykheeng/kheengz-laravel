@@ -140,10 +140,14 @@ class Product extends Model implements HasSnapshotSchema
         return $this->blocked_at !== null;
     }
 
-    /** A Draft, never on sale: nothing can point at it yet, so it may be deleted. Others are hidden. */
+    /**
+     * A Draft, never on sale and with nothing on the shelf: nothing can point at it yet, so it may be
+     * deleted. Others are hidden.
+     */
     public function isDeletable(): bool
     {
-        return $this->status === ProductStatus::Draft && $this->published_at === null;
+        return $this->status === ProductStatus::Draft && $this->published_at === null
+            && StockLevel::query()->whereIn('product_variant_id', $this->variants()->select('id'))->where('on_hand', '!=', 0)->doesntExist();
     }
 
     /** @return BelongsTo<Shop, $this> */
@@ -180,6 +184,12 @@ class Product extends Model implements HasSnapshotSchema
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class)->orderBy('position');
+    }
+
+    /** @return HasMany<ProductVariant, $this> */
+    public function trackedVariants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class)->where('track_stock', true);
     }
 
     /** @return HasMany<ProductPhoto, $this> */

@@ -8,6 +8,7 @@ use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Shop;
+use App\Models\StockLevel;
 use App\Notifications\ProductBlocked;
 use App\Services\ProductCatalogue;
 use App\Support\PerPage;
@@ -49,7 +50,12 @@ class ProductController extends Controller
             ->allowedSorts('name', 'status', 'created_at', 'updated_at')
             ->defaultSort('-updated_at')
             ->with(['category', 'photos' => fn ($q) => $q->limit(1)])
-            ->withCount(['variants', 'photos'])
+            ->withCount(['variants', 'photos', 'trackedVariants'])
+            ->addSelect(['stock_available' => StockLevel::query()
+                ->join('product_variants', 'product_variants.id', '=', 'stock_levels.product_variant_id')
+                ->whereColumn('product_variants.product_id', 'products.id')
+                ->where('product_variants.track_stock', true)
+                ->selectRaw('coalesce(sum(stock_levels.on_hand - stock_levels.reserved), 0)')])
             ->withMin('variants', 'price')
             ->withMax('variants', 'price')
             ->paginate(PerPage::from($request))
@@ -150,7 +156,9 @@ class ProductController extends Controller
     /** A draft that was never on sale. Anything else is hidden instead: orders may point at it. */
     public function destroy(Product $product): JsonResponse
     {
-        abort_unless($product->isDeletable(), 422, 'This product has been on sale, so it is kept for its orders. Hide it instead.');
+        abort_unless($product->isDeletable(), 422, $product->published_at === null && $product->status === ProductStatus::Draft
+            ? 'Stock is on the shelf for this product. Count it to zero first, or keep it as a draft.'
+            : 'This product has been on sale, so it is kept for its orders. Hide it instead.');
 
         $snapshot = $this->buildModelSnapshot($product);
         $this->catalogue->delete($product);
@@ -212,6 +220,8 @@ class ProductController extends Controller
             'variants.*.compare_at_price' => ['nullable', 'integer', 'min:1', 'max:100000000'],
             'variants.*.weight_grams' => ['nullable', 'integer', 'min:1', 'max:1000000'],
             'variants.*.is_active' => ['sometimes', 'boolean'],
+            'variants.*.track_stock' => ['sometimes', 'boolean'],
+            'variants.*.low_stock_at' => ['nullable', 'numeric', 'min:0', 'max:1000000'],
             'variants.*.price_breaks' => ['sometimes', 'array', 'max:'.ProductVariant::MAX_PRICE_BREAKS],
             'variants.*.price_breaks.*.min_quantity' => ['required', 'numeric', 'gt:1', 'max:1000000'],
             'variants.*.price_breaks.*.unit_price' => ['required', 'integer', 'min:1', 'max:100000000'],
