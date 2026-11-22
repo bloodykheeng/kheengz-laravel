@@ -42,18 +42,44 @@ class ImageFromLink
      */
     public function store(string $url, string $folder, string $field): string
     {
+        [$bytes, $extension] = $this->download($url, $field);
+
+        $base = pathinfo((string) parse_url(trim($url), PHP_URL_PATH), PATHINFO_FILENAME);
+        $name = substr(preg_replace('/[^A-Za-z0-9_\-]/', '_', $base) ?: 'photo', 0, 30).'_'.uniqid().'.'.$extension;
+        $path = trim($folder, '/').'/'.$name;
+        Storage::disk('public')->put($path, $bytes);
+
+        return $path;
+    }
+
+    /**
+     * The image at `$url`, checked, without keeping it: for callers that re-encode it first (product
+     * photos, App\Support\ProductImage).
+     *
+     * @return array{0: string, 1: string} the bytes and their extension (jpg, png, webp, gif)
+     *
+     * @throws ValidationException on `$field`
+     */
+    public function download(string $url, string $field): array
+    {
         $url = trim($url);
         $parts = parse_url($url);
         if (! is_array($parts) || ! in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'], true) || empty($parts['host'])) {
             $this->fail($field, 'Paste the full image link, starting with https://');
         }
-        $this->assertPublic((string) $parts['host'], $field);
+        $host = trim((string) $parts['host'], '[]');
+        $ips = $this->assertPublic($host, $field);
+        $port = $parts['port'] ?? (strtolower((string) $parts['scheme']) === 'https' ? 443 : 80);
 
         try {
             $response = Http::timeout(20)
                 ->connectTimeout(8)
                 ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; Kheengz image import)', 'Accept' => 'image/*'])
                 ->withOptions([
+                    // Connect to the address just checked, so the name cannot be re-pointed at a private
+                    // one between the check and the download (DNS rebinding). Redirects are checked as
+                    // they come.
+                    'curl' => filter_var($host, FILTER_VALIDATE_IP) ? [] : [CURLOPT_RESOLVE => ["{$host}:{$port}:{$ips[0]}"]],
                     'allow_redirects' => [
                         'max' => 3,
                         'protocols' => ['http', 'https'],
@@ -79,10 +105,11 @@ class ImageFromLink
             $this->fail($field, 'We could not download that image. Save the picture and upload it instead.');
         }
 
-        return $this->keep($response, $url, $folder, $field);
+        return $this->check($response, $field);
     }
 
-    private function keep(Response $response, string $url, string $folder, string $field): string
+    /** @return array{0: string, 1: string} */
+    private function check(Response $response, string $field): array
     {
         if (! $response->successful()) {
             $this->fail($field, "That site would not give us the image (it answered {$response->status()}). Save the picture and upload it instead.");
@@ -99,16 +126,15 @@ class ImageFromLink
             $this->fail($field, 'That link is not a JPG, PNG, WebP or GIF image. Open the picture itself, copy its address, and paste that.');
         }
 
-        $base = pathinfo((string) parse_url($url, PHP_URL_PATH), PATHINFO_FILENAME);
-        $name = substr(preg_replace('/[^A-Za-z0-9_\-]/', '_', $base) ?: 'photo', 0, 30).'_'.uniqid().'.'.$extension;
-        $path = trim($folder, '/').'/'.$name;
-        Storage::disk('public')->put($path, $bytes);
-
-        return $path;
+        return [$bytes, $extension];
     }
 
-    /** Every address the host resolves to must be public: no localhost, private network or cloud metadata. */
-    private function assertPublic(string $host, string $field): void
+    /**
+     * Every address the host resolves to must be public: no localhost, private network or cloud metadata.
+     *
+     * @return non-empty-list<string> the addresses
+     */
+    private function assertPublic(string $host, string $field): array
     {
         $host = trim($host, '[]');
         $ips = filter_var($host, FILTER_VALIDATE_IP) ? [$host] : ($this->resolve)($host);
@@ -120,6 +146,8 @@ class ImageFromLink
         if (! $public) {
             $this->fail($field, $ips === [] ? 'We could not find that site. Check the link.' : 'That link does not point to a public website.');
         }
+
+        return array_values($ips);
     }
 
     private function fail(string $field, string $message): never
