@@ -68,11 +68,11 @@ class PlatformSettings extends Model implements HasSnapshotSchema
     public static function snapshotSchema(): array
     {
         return [
-            'commission_bps' => ['label' => 'Commission (basis points)', 'type' => 'integer'],
-            'fixed_fee_per_order' => ['label' => 'Fixed fee per order (UGX)', 'type' => 'integer'],
-            'service_fee_per_order' => ['label' => 'Service fee per order (UGX)', 'type' => 'integer'],
-            'debt_limit_amount' => ['label' => 'Debt limit (UGX)', 'type' => 'integer'],
-            'debt_limit_days' => ['label' => 'Debt limit (days)', 'type' => 'integer'],
+            'commission_bps' => ['label' => 'Commission (basis points)', 'type' => 'number'],
+            'fixed_fee_per_order' => ['label' => 'Fixed fee per order (UGX)', 'type' => 'number'],
+            'service_fee_per_order' => ['label' => 'Service fee per order (UGX)', 'type' => 'number'],
+            'debt_limit_amount' => ['label' => 'Debt limit (UGX)', 'type' => 'number'],
+            'debt_limit_days' => ['label' => 'Debt limit (days)', 'type' => 'number'],
             'marzpay_enabled' => ['label' => 'MarzPay on', 'type' => 'boolean'],
             'olycash_enabled' => ['label' => 'OlyCash on', 'type' => 'boolean'],
             'card_enabled' => ['label' => 'Card on', 'type' => 'boolean'],

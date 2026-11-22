@@ -92,9 +92,9 @@ class Shop extends Model implements HasSnapshotSchema
             'email' => ['label' => 'Email', 'type' => 'string'],
             'status' => ['label' => 'Status', 'type' => 'string'],
             'status_reason' => ['label' => 'Reason', 'type' => 'string'],
-            'commission_bps' => ['label' => 'Commission (basis points)', 'type' => 'integer'],
-            'debt_limit_amount' => ['label' => 'Debt limit (UGX)', 'type' => 'integer'],
-            'debt_limit_days' => ['label' => 'Debt limit (days)', 'type' => 'integer'],
+            'commission_bps' => ['label' => 'Commission (basis points)', 'type' => 'number'],
+            'debt_limit_amount' => ['label' => 'Debt limit (UGX)', 'type' => 'number'],
+            'debt_limit_days' => ['label' => 'Debt limit (days)', 'type' => 'number'],
         ];
     }
 

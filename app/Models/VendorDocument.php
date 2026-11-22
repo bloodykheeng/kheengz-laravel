@@ -64,7 +64,7 @@ class VendorDocument extends Model implements HasSnapshotSchema
             'type' => ['label' => 'Document', 'type' => 'string'],
             'original_name' => ['label' => 'File name', 'type' => 'string'],
             'mime_type' => ['label' => 'File type', 'type' => 'string'],
-            'size_bytes' => ['label' => 'Size (bytes)', 'type' => 'integer'],
+            'size_bytes' => ['label' => 'Size (bytes)', 'type' => 'number'],
         ];
     }
 
