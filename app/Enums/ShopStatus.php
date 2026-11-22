@@ -25,6 +25,16 @@ enum ShopStatus: string
         return in_array($this, [self::Draft, self::ChangesRequested, self::Active], true);
     }
 
+    /**
+     * The vendor may add and change products and sections. Also while it is being reviewed (the
+     * review is of the shop, and a reviewer may want to see what it will sell) and while suspended
+     * (fixing the products may be what the Admin asked for). Not once rejected or closed.
+     */
+    public function allowsCatalogueEdits(): bool
+    {
+        return ! in_array($this, [self::Rejected, self::Closed], true);
+    }
+
     /** @return list<string> */
     public static function values(): array
     {

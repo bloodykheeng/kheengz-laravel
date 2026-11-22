@@ -18,6 +18,23 @@ enum ShopType: string
     case HardwareAndBuilding = 'Hardware & building';
     case General = 'General';
 
+    /**
+     * The units this kind of shop sells by, offered first on its product form (plan-shop-identity §2).
+     * Names from the units table; the Admin keeps that list, so a name missing there is skipped.
+     *
+     * @return list<string>
+     */
+    public function suggestedUnits(): array
+    {
+        return match ($this) {
+            self::HouseholdAndHome => ['piece', 'dozen', 'bale', 'set'],
+            self::HardwareAndBuilding => ['piece', 'metre', 'bag', 'kg', 'roll', 'sheet'],
+            self::GroceriesAndFreshProduce => ['kg', 'bunch', 'heap', 'tray', 'crate', 'piece'],
+            self::FashionAndBeauty, self::ElectronicsAndPhones => ['piece', 'set'],
+            self::General => ['piece', 'dozen', 'kg'],
+        };
+    }
+
     /** @return list<string> */
     public static function values(): array
     {

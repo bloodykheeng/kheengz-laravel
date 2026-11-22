@@ -164,6 +164,24 @@ class Shop extends Model implements HasSnapshotSchema
         return $this->hasMany(ShopReview::class);
     }
 
+    /** @return HasMany<ShopSection, $this> */
+    public function sections(): HasMany
+    {
+        return $this->hasMany(ShopSection::class)->orderBy('position')->orderBy('name');
+    }
+
+    /** @return HasMany<Product, $this> */
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    /** @return HasMany<CategoryRequest, $this> */
+    public function categoryRequests(): HasMany
+    {
+        return $this->hasMany(CategoryRequest::class);
+    }
+
     /** @return BelongsTo<User, $this> */
     public function approvedBy(): BelongsTo
     {
