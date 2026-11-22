@@ -23,6 +23,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $weight_grams
  * @property int $position
  * @property bool $is_active
+ * @property bool $track_stock
+ * @property string|null $low_stock_at
  * @property-read Product $product
  * @property-read Unit $unit
  * @property-read Collection<int, ProductOptionValue> $optionValues
@@ -35,6 +37,12 @@ class ProductVariant extends Model
     /** A wholesale ladder longer than this is a price list, not price breaks. */
     public const MAX_PRICE_BREAKS = 5;
 
+    /** The columns' defaults, so a variant just made reads them before it is reloaded. */
+    protected $attributes = [
+        'is_active' => true,
+        'track_stock' => true,
+    ];
+
     protected $fillable = [
         'product_id',
         'sku',
@@ -45,6 +53,8 @@ class ProductVariant extends Model
         'weight_grams',
         'position',
         'is_active',
+        'track_stock',
+        'low_stock_at',
     ];
 
     protected function casts(): array
@@ -55,6 +65,8 @@ class ProductVariant extends Model
             'weight_grams' => 'integer',
             'position' => 'integer',
             'is_active' => 'boolean',
+            'track_stock' => 'boolean',
+            'low_stock_at' => 'decimal:3',
         ];
     }
 
@@ -83,6 +95,12 @@ class ProductVariant extends Model
     public function optionValues(): BelongsToMany
     {
         return $this->belongsToMany(ProductOptionValue::class, 'product_variant_option_value');
+    }
+
+    /** @return HasMany<StockLevel, $this> */
+    public function stockLevels(): HasMany
+    {
+        return $this->hasMany(StockLevel::class);
     }
 
     /** @return HasMany<PriceBreak, $this> */
