@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use App\Models\Vendor;
+use App\Services\ProductCatalogue;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Removes the throwaway accounts the browser suite creates (`e2e-…@example.com`), and the vendors
- * that only they run (with their shops, locations, history, payout destinations, papers and
+ * that only they run (with their shops and everything in them, payout destinations, papers and
  * memberships), so Users and Vendors are not cluttered by test runs. Playwright's global teardown
  * runs it after every suite (kheengz-nextjs/e2e/global-teardown.ts).
  * Never in production: there it refuses and deletes nothing.
@@ -22,7 +23,7 @@ class CleanupE2eAccounts extends Command
 {
     public const PATTERN = 'e2e-%@example.com';
 
-    public function handle(): int
+    public function handle(ProductCatalogue $catalogue): int
     {
         if (app()->isProduction()) {
             $this->error('Refused: e2e:cleanup never runs in production.');
@@ -40,9 +41,12 @@ class CleanupE2eAccounts extends Command
             ->with(['shops', 'documents'])
             ->get();
 
-        DB::transaction(function () use ($users, $vendors) {
+        DB::transaction(function () use ($users, $vendors, $catalogue) {
             foreach ($vendors as $vendor) {
                 foreach ($vendor->shops as $shop) {
+                    $shop->products()->get()->each(fn ($product) => $catalogue->delete($product));
+                    $shop->sections()->get()->each->delete(); // each, so the photos go too
+                    $shop->categoryRequests()->delete();
                     $shop->staff()->detach();
                     $shop->locations()->delete();
                     $shop->reviews()->delete();
