@@ -59,6 +59,10 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // TIMESTAMP columns are converted through the connection's time zone, which otherwise is the
+            // server's: pinned to UTC so what is stored and read is UTC wherever MySQL runs
+            // (coding-notes ai-agents/dates-and-timezones-with-an-ai-agent.md, trap 7).
+            'timezone' => env('DB_TIMEZONE', '+00:00'),
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
@@ -79,6 +83,10 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // TIMESTAMP columns are converted through the connection's time zone, which otherwise is the
+            // server's: pinned to UTC so what is stored and read is UTC wherever MySQL runs
+            // (coding-notes ai-agents/dates-and-timezones-with-an-ai-agent.md, trap 7).
+            'timezone' => env('DB_TIMEZONE', '+00:00'),
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],

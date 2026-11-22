@@ -10,6 +10,11 @@ document for the full reasoning; these are the rules as they apply in Kheengz (c
 3. **One business timezone defines "a day"**: `config('app.business_timezone')` (`BUSINESS_TIMEZONE`, default
    `Africa/Kampala`), read only through `App\Support\BusinessDate`. Charts, statements and date filters use it.
 4. **The viewer's timezone is for display only.**
+5. **The MySQL session is pinned to UTC** (`'timezone' => env('DB_TIMEZONE', '+00:00')` on `mysql` and
+   `mariadb` in `config/database.php`). `APP_TIMEZONE=UTC` alone is not enough: `TIMESTAMP` columns (every
+   `timestamps()`) are converted through the session's zone, which otherwise is the database server's, so a
+   server in Kampala would store and read three hours off. Check: `select @@session.time_zone` gives `+00:00`
+   (coding-notes `ai-agents/dates-and-timezones-with-an-ai-agent.md`, trap 7).
 
 ## In code
 
