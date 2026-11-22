@@ -88,6 +88,30 @@ class ProductAttributeController extends Controller
         return response()->json(['message' => 'Saved.', 'data' => new ProductAttributeResource($attribute->fresh('options'))]);
     }
 
+    /**
+     * Ticked attributes, all or none: if products are described by any of them, nothing is deleted and the
+     * answer names it. Ones only on categories come off them.
+     */
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $ids = $request->validate(['ids' => ['required', 'array', 'max:100'], 'ids.*' => ['string', 'distinct', Rule::exists('product_attributes', 'id')]])['ids'];
+        $attributes = ProductAttribute::query()->whereIn('id', $ids)->get();
+        $used = $attributes->first(fn (ProductAttribute $a) => $a->isInUse());
+        abort_if($used !== null, 422, "Products are described by {$used?->name}, so nothing was deleted. Untick it, or take it off the categories instead.");
+
+        DB::transaction(function () use ($attributes) {
+            foreach ($attributes as $attribute) {
+                $snapshot = $this->buildModelSnapshot($attribute);
+                $attribute->categories()->detach();
+                $attribute->options()->delete();
+                $attribute->delete();
+                $this->logActivity('attribute_deleted', "Attribute {$attribute->name} deleted.", ['snapshot' => $snapshot], $attribute);
+            }
+        });
+
+        return response()->json(['message' => $attributes->count() === 1 ? "{$attributes->first()?->name} deleted." : "{$attributes->count()} attributes deleted."]);
+    }
+
     /** Never one products use; one that is only on categories comes off them. */
     public function destroy(ProductAttribute $attribute): JsonResponse
     {

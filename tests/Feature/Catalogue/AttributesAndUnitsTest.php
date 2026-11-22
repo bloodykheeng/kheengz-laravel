@@ -74,3 +74,17 @@ it('keeps whether a unit takes decimals once products are sold by it', function 
     $this->deleteJson("/api/v1/units/{$fx['piece']->id}")->assertUnprocessable();
     $this->deleteJson("/api/v1/units/{$fx['kg']->id}")->assertOk();
 });
+
+it('deletes ticked attributes and units all or none', function () {
+    actingAsAdmin();
+    $fx = catalogueFixture();
+    ProductVariant::query()->create(['product_id' => Product::factory()->create()->id, 'unit_id' => $fx['piece']->id, 'price' => 1000]);
+    $finish = $this->postJson('/api/v1/product-attributes', ['name' => 'Finish', 'input_type' => 'Text'])->json('data.id');
+
+    $this->deleteJson('/api/v1/units', ['ids' => [$fx['piece']->id, $fx['kg']->id]])->assertUnprocessable()
+        ->assertJsonPath('message', 'Products are sold by the piece, so nothing was deleted. Untick it, or turn it off instead.');
+    $this->deleteJson('/api/v1/units', ['ids' => [$fx['kg']->id]])->assertOk();
+
+    $this->deleteJson('/api/v1/product-attributes', ['ids' => [$fx['capacity']->id, $finish]])->assertOk()->assertJsonPath('message', '2 attributes deleted.');
+    $this->getJson('/api/v1/units?page=1&per_page=5')->assertOk()->assertJsonPath('meta.total', 1);
+});

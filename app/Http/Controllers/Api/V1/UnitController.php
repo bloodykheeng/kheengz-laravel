@@ -7,12 +7,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\UnitResource;
 use App\Models\ProductVariant;
 use App\Models\Unit;
+use App\Support\PerPage;
 use App\Traits\LoggableTrait;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 /**
  * Units of sale (D17): piece, dozen, kg, metre. The Admin keeps the list (`manage catalogue`); a
@@ -24,8 +28,21 @@ class UnitController extends Controller
 {
     use LoggableTrait;
 
+    /**
+     * Pickers get the whole short list (`active`, `shop_type`); the Units screen pages it like every list
+     * (`page`, `filter[search]`, `sort`).
+     */
     public function index(Request $request): AnonymousResourceCollection
     {
+        if ($request->has('page')) {
+            return UnitResource::collection(QueryBuilder::for(Unit::query())
+                ->allowedFilters(AllowedFilter::callback('search', fn ($q, $value) => $q->where(fn ($w) => $w->where('name', 'like', "%{$value}%")->orWhere('plural', 'like', "%{$value}%"))))
+                ->allowedSorts('name', 'position', 'created_at')
+                ->defaultSort('position')
+                ->paginate(PerPage::from($request))
+                ->appends($request->query()));
+        }
+
         $request->validate(['shop_type' => ['sometimes', Rule::enum(ShopType::class)]]);
         $units = Unit::query()->when($request->boolean('active'), fn ($q) => $q->where('is_active', true))
             ->orderBy('position')->orderBy('name')->get();
@@ -65,6 +82,25 @@ class UnitController extends Controller
         $this->logActivity('unit_updated', "Unit {$unit->name} updated.", ['changes' => $this->buildChanges($unit, $before)], $unit);
 
         return response()->json(['message' => 'Saved.', 'data' => new UnitResource($unit)]);
+    }
+
+    /** Ticked units, all or none: if products are sold by any of them, nothing is deleted. */
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $ids = $request->validate(['ids' => ['required', 'array', 'max:100'], 'ids.*' => ['string', 'distinct', Rule::exists('units', 'id')]])['ids'];
+        $units = Unit::query()->whereIn('id', $ids)->get();
+        $used = $units->first(fn (Unit $u) => ProductVariant::query()->where('unit_id', $u->id)->exists());
+        abort_if($used !== null, 422, "Products are sold by the {$used?->name}, so nothing was deleted. Untick it, or turn it off instead.");
+
+        DB::transaction(function () use ($units) {
+            foreach ($units as $unit) {
+                $snapshot = $this->buildModelSnapshot($unit);
+                $unit->delete();
+                $this->logActivity('unit_deleted', "Unit {$unit->name} deleted.", ['snapshot' => $snapshot], $unit);
+            }
+        });
+
+        return response()->json(['message' => $units->count() === 1 ? "{$units->first()?->name} deleted." : "{$units->count()} units deleted."]);
     }
 
     public function destroy(Unit $unit): JsonResponse

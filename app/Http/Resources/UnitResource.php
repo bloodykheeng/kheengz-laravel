@@ -19,6 +19,8 @@ class UnitResource extends JsonResource
             'allows_decimals' => $this->allows_decimals,
             'position' => $this->position,
             'is_active' => $this->is_active,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
             // Set when the list was asked for a shop type: this unit is one that type sells by.
             'suggested' => $this->when($this->getAttribute('suggested') !== null, fn () => (bool) $this->getAttribute('suggested')),
         ];

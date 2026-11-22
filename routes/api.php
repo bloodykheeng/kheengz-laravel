@@ -188,9 +188,11 @@ Route::prefix('v1')->name('api.')->group(function () {
             Route::post('product-attributes', [ProductAttributeController::class, 'store'])->name('product-attributes.store');
             Route::put('product-attributes/{attribute}', [ProductAttributeController::class, 'update'])->name('product-attributes.update');
             Route::delete('product-attributes/{attribute}', [ProductAttributeController::class, 'destroy'])->name('product-attributes.destroy');
+            Route::delete('product-attributes', [ProductAttributeController::class, 'bulkDestroy'])->name('product-attributes.bulk-destroy');
             Route::post('units', [UnitController::class, 'store'])->name('units.store');
             Route::put('units/{unit}', [UnitController::class, 'update'])->name('units.update');
             Route::delete('units/{unit}', [UnitController::class, 'destroy'])->name('units.destroy');
+            Route::delete('units', [UnitController::class, 'bulkDestroy'])->name('units.bulk-destroy');
             Route::post('category-requests/{categoryRequest}/add', [CategoryRequestController::class, 'add'])->name('category-requests.add');
             Route::post('category-requests/{categoryRequest}/decline', [CategoryRequestController::class, 'decline'])->name('category-requests.decline');
         });
