@@ -7,6 +7,7 @@ One topic per file, updated in the same change as the code it describes. The wor
 | --- | --- | --- |
 | [environment-setup.md](environment-setup.md) | Every `.env` value that needs an outside account | Kheengz |
 | [vendors-and-shops.md](vendors-and-shops.md) | Applying, papers, approval, shops and their review, members, locations, platform settings | Kheengz |
+| [catalogue.md](catalogue.md) | Categories, attributes, units, category requests, shop sections, products, variants, price breaks, photos | Kheengz |
 | [visitor-origin.md](visitor-origin.md) | Country, region, IP and device on the audit trail and on orders | Kheengz |
 | [rate-limits.md](rate-limits.md) | Buyer limits per person, not per IP | GiftNest, rewritten |
 | [reference-numbers.md](reference-numbers.md) | Order and payout numbers from `SerialCounter`, never reused | Alpha |
@@ -24,5 +25,5 @@ One topic per file, updated in the same change as the code it describes. The wor
 
 Copied docs keep their original examples (SDS districts, Alpha investment accounts) where those show
 why a rule exists; Kheengz examples replace them as modules land. GiftNest's deletion policy, realtime,
-public endpoints and photos-from-links docs were not copied: they describe events and gifts, and each
+public endpoints docs were not copied (photos from links are in catalogue.md): they describe events and gifts, and each
 is written fresh with the Kheengz module it belongs to.

@@ -56,6 +56,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage queue',
             'manage settings',
             'manage vendors',
+            // The category tree, attributes, units, and answering shops' category requests (D32).
+            'manage catalogue',
         ];
 
         $rolesWithPermissions = [

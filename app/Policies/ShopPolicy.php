@@ -30,6 +30,15 @@ class ShopPolicy
         return $user->can('run shops') && $shop->status->isEditableByVendor() && $shop->isRunBy($user);
     }
 
+    /**
+     * Add and change its products and sections (docs/catalogue.md): anyone who runs it, in any status
+     * but Rejected or Closed (ShopStatus::allowsCatalogueEdits), including while it is reviewed.
+     */
+    public function manageCatalogue(User $user, Shop $shop): bool
+    {
+        return $user->can('run shops') && $shop->status->allowsCatalogueEdits() && $shop->isRunBy($user);
+    }
+
     /** Send for review, close: the vendor's Owner. */
     public function own(User $user, Shop $shop): bool
     {

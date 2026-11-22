@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\V1\ActivityLogsController;
 use App\Http\Controllers\Api\V1\AuthCheckController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\CategoryRequestController;
 use App\Http\Controllers\Api\V1\EmailTestController;
 use App\Http\Controllers\Api\V1\EmailVerificationController;
 use App\Http\Controllers\Api\V1\JobController;
@@ -11,9 +13,14 @@ use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OtpPasswordResetController;
 use App\Http\Controllers\Api\V1\PayoutDestinationController;
 use App\Http\Controllers\Api\V1\PlatformSettingsController;
+use App\Http\Controllers\Api\V1\ProductAttributeController;
+use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\ProductPhotoController;
 use App\Http\Controllers\Api\V1\RolesAndPermissionsController;
 use App\Http\Controllers\Api\V1\ShopController;
 use App\Http\Controllers\Api\V1\ShopReviewController;
+use App\Http\Controllers\Api\V1\ShopSectionController;
+use App\Http\Controllers\Api\V1\UnitController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\VendorApplicationController;
 use App\Http\Controllers\Api\V1\VendorController;
@@ -158,6 +165,63 @@ Route::prefix('v1')->name('api.')->group(function () {
             Route::post('shops/{shop}/locations', [LocationController::class, 'store'])->name('locations.store');
             Route::put('shops/{shop}/locations/{location}', [LocationController::class, 'update'])->name('locations.update');
             Route::delete('shops/{shop}/locations/{location}', [LocationController::class, 'destroy'])->name('locations.destroy');
+        });
+
+        // ── Catalogue (D32; docs/catalogue.md) ──────────────────────────────────
+        // Categories, attributes and units are read by everyone who places products and kept by
+        // `manage catalogue`. The tree and the units come whole (not paged): they are short and pickers
+        // need all of them.
+        Route::middleware('can:viewAny,App\Models\Category')->group(function () {
+            Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
+            Route::get('categories/{category}', [CategoryController::class, 'show'])->name('categories.show');
+            Route::get('product-attributes', [ProductAttributeController::class, 'index'])->name('product-attributes.index');
+            Route::get('units', [UnitController::class, 'index'])->name('units.index');
+            // The Admin sees every request; a vendor's people their shops' (decided in the controller).
+            Route::get('category-requests', [CategoryRequestController::class, 'index'])->name('category-requests.index');
+        });
+        Route::middleware('can:manage catalogue')->group(function () {
+            Route::post('categories', [CategoryController::class, 'store'])->name('categories.store');
+            Route::put('categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
+            Route::delete('categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+            Route::put('categories/{category}/attributes', [CategoryController::class, 'syncAttributes'])->name('categories.attributes');
+            Route::post('product-attributes', [ProductAttributeController::class, 'store'])->name('product-attributes.store');
+            Route::put('product-attributes/{attribute}', [ProductAttributeController::class, 'update'])->name('product-attributes.update');
+            Route::delete('product-attributes/{attribute}', [ProductAttributeController::class, 'destroy'])->name('product-attributes.destroy');
+            Route::post('units', [UnitController::class, 'store'])->name('units.store');
+            Route::put('units/{unit}', [UnitController::class, 'update'])->name('units.update');
+            Route::delete('units/{unit}', [UnitController::class, 'destroy'])->name('units.destroy');
+            Route::post('category-requests/{categoryRequest}/add', [CategoryRequestController::class, 'add'])->name('category-requests.add');
+            Route::post('category-requests/{categoryRequest}/decline', [CategoryRequestController::class, 'decline'])->name('category-requests.decline');
+        });
+        Route::post('shops/{shop}/category-requests', [CategoryRequestController::class, 'store'])->middleware('can:manageCatalogue,shop')->name('category-requests.store');
+
+        // ── A shop's sections and products ──────────────────────────────────────
+        // Seen by whoever may see the shop (reviewers too); changed by whoever runs it while its
+        // status allows (ShopPolicy::manageCatalogue, ProductPolicy).
+        Route::get('shops/{shop}/sections', [ShopSectionController::class, 'index'])->middleware('can:view,shop')->name('shop-sections.index');
+        Route::middleware('can:manageCatalogue,shop')->scopeBindings()->group(function () {
+            Route::post('shops/{shop}/sections', [ShopSectionController::class, 'store'])->name('shop-sections.store');
+            Route::put('shops/{shop}/sections/order', [ShopSectionController::class, 'reorder'])->name('shop-sections.reorder');
+            Route::put('shops/{shop}/sections/{section}', [ShopSectionController::class, 'update'])->name('shop-sections.update');
+            Route::delete('shops/{shop}/sections/{section}', [ShopSectionController::class, 'destroy'])->name('shop-sections.destroy');
+            Route::post('shops/{shop}/products', [ProductController::class, 'store'])->name('products.store');
+        });
+        Route::get('shops/{shop}/products', [ProductController::class, 'index'])->middleware('can:view,shop')->name('products.index');
+        Route::get('products/{product}', [ProductController::class, 'show'])->middleware('can:view,product')->name('products.show');
+        Route::middleware('can:update,product')->scopeBindings()->group(function () {
+            Route::put('products/{product}', [ProductController::class, 'update'])->name('products.update');
+            Route::delete('products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+            Route::post('products/{product}/publish', [ProductController::class, 'publish'])->name('products.publish');
+            Route::post('products/{product}/hide', [ProductController::class, 'hide'])->name('products.hide');
+            Route::post('products/{product}/photos', [ProductPhotoController::class, 'store'])->name('product-photos.store');
+            Route::put('products/{product}/photos/order', [ProductPhotoController::class, 'reorder'])->name('product-photos.reorder');
+            Route::put('products/{product}/photos/{photo}', [ProductPhotoController::class, 'update'])->name('product-photos.update');
+            Route::delete('products/{product}/photos/{photo}', [ProductPhotoController::class, 'destroy'])->name('product-photos.destroy');
+        });
+        // Kheengz takes a product down, or allows it again (D35).
+        Route::middleware('can:moderate,product')->group(function () {
+            Route::post('products/{product}/block', [ProductController::class, 'block'])->name('products.block');
+            Route::post('products/{product}/unblock', [ProductController::class, 'unblock'])->name('products.unblock');
         });
 
         // Platform settings (D23, D28, D34)
