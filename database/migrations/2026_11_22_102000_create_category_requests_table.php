@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('name', 80);                            // what they asked for
             $table->ulid('parent_id')->nullable();                 // where they think it belongs
             $table->string('note', 500)->nullable();               // what they sell that needs it
-            $table->string('status', 20)->default('Pending')->index(); // CategoryRequestStatus
+            $table->string('status', 20)->default('Pending')->index()->comment('Pending, Added, Declined (App\\Enums\\CategoryRequestStatus)');
             $table->ulid('category_id')->nullable();               // the category that answers it
             $table->string('answer', 500)->nullable();             // the Admin's words to the vendor
             $table->timestamp('decided_at')->nullable();

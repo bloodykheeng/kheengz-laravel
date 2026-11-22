@@ -18,7 +18,7 @@ return new class extends Migration
             $table->ulid('id')->primary();
             $table->ulid('product_variant_id');
             $table->ulid('location_id');
-            $table->string('reason', 30);                        // StockMovementReason
+            $table->string('reason', 30)->comment('Received, Counted, Damaged, Returned, Moved out, Moved in, Held, Released, Sold online (App\\Enums\\StockMovementReason)');
             $table->decimal('on_hand_change', 12, 3)->default(0); // + in, - out
             $table->decimal('reserved_change', 12, 3)->default(0);
             $table->decimal('on_hand_after', 12, 3);

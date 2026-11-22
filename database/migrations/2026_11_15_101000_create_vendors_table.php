@@ -17,7 +17,7 @@ return new class extends Migration
 
             // The name the vendor trades and is paid under; checked against their ID or registration.
             $table->string('name')->index();
-            $table->string('kind', 20);                            // VendorKind
+            $table->string('kind', 20)->comment('Individual, Company (App\\Enums\\VendorKind)');
             // The owner's National Identification Number (NIN), always: a company is run by someone.
             $table->string('national_id_number', 14)->unique();
             $table->string('registration_number', 40)->nullable(); // URSB number, companies only
@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('email')->nullable();
             $table->string('address')->nullable();
 
-            $table->string('status', 20)->default('Pending')->index(); // VendorStatus
+            $table->string('status', 20)->default('Pending')->index()->comment('Pending, Approved, Rejected, Suspended (App\\Enums\\VendorStatus)');
             // Why the Admin rejected or suspended it, shown to the vendor.
             $table->string('status_reason', 500)->nullable();
             $table->timestamp('approved_at')->nullable();

@@ -19,12 +19,12 @@ return new class extends Migration
             $table->string('name')->index();
             // The shop's address name: `homenest` → homenest.kheengz.com (D26). Never reused while it exists.
             $table->string('slug', 40)->unique();
-            $table->string('shop_type', 40);                       // ShopType
+            $table->string('shop_type', 40)->comment('Household & home, Electronics & phones, Groceries & fresh produce, Fashion & beauty, Hardware & building, General (App\\Enums\\ShopType)');
             $table->string('description', 1000)->nullable();
             $table->string('phone', 20);                           // digits with 256; on the shop page
             $table->string('email')->nullable();
 
-            $table->string('status', 30)->default('Draft')->index(); // ShopStatus
+            $table->string('status', 30)->default('Draft')->index()->comment('Draft, Pending review, Changes requested, Active, Rejected, Suspended, Closed (App\\Enums\\ShopStatus)');
             $table->string('status_reason', 500)->nullable();      // the Admin's latest reason, shown to the vendor
             $table->timestamp('approved_at')->nullable();
             $table->ulid('approved_by')->nullable();

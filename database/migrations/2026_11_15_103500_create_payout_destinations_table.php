@@ -17,8 +17,8 @@ return new class extends Migration
             $table->ulid('id')->primary();
             $table->ulid('vendor_id');
 
-            $table->string('method', 20);                          // PayoutMethod
-            $table->string('network', 10)->nullable();             // MobileNetwork, Mobile Money only
+            $table->string('method', 20)->comment('Mobile Money, Bank (App\\Enums\\PayoutMethod)');
+            $table->string('network', 10)->nullable()->comment('MTN, Airtel (App\\Enums\\MobileNetwork)');
             $table->string('bank_code', 20)->nullable();           // MarzPay's code (EQU), Bank only
             $table->string('bank_name', 120)->nullable();          // as MarzPay names it, Bank only
             // The Mobile Money number (digits with 256) or the bank account number.
@@ -27,7 +27,7 @@ return new class extends Migration
             $table->string('account_name', 160);
             $table->string('checked_name', 160)->nullable();
 
-            $table->string('status', 20)->index();                 // PayoutDestinationStatus
+            $table->string('status', 20)->index()->comment('Verified, Awaiting review, Rejected (App\\Enums\\PayoutDestinationStatus)');
             // Why it waits or was refused, shown to the vendor and the Admin.
             $table->string('status_reason', 500)->nullable();
             $table->timestamp('reviewed_at')->nullable();

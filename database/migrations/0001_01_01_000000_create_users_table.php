@@ -21,13 +21,13 @@ return new class extends Migration
             $table->string('password')->nullable();
 
             $table->boolean('allow_notifications')->default(true);
-            $table->string('status')->default('Active')->index();
+            $table->string('status')->default('Active')->index()->comment('Active, Inactive (App\\Enums\\RecordStatus)');
             $table->timestamp('email_verified_at')->nullable();
             $table->timestamp('lastlogin')->nullable();
             // When a vendor who signed themselves up agreed to the Terms and the Privacy Policy.
             $table->timestamp('terms_accepted_at')->nullable();
             $table->string('photo_url')->nullable();
-            $table->string('photo_source', 20)->nullable();        // PhotoSource; null with no photo
+            $table->string('photo_source', 20)->nullable()->comment('Upload, Link, External (App\\Enums\\PhotoSource)');
             $table->string('photo_source_url', 2048)->nullable();  // the link a Link photo was copied from
             $table->string('timezone')->nullable()->default('Africa/Kampala');
             $table->rememberToken();

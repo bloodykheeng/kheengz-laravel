@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('shop_reviews', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->ulid('shop_id');
-            $table->string('decision', 30);                        // ShopReviewDecision
+            $table->string('decision', 30)->comment('Submitted, Approved, Changes requested, Rejected, Suspended, Reinstated, Closed (App\\Enums\\ShopReviewDecision)');
             $table->string('reason', 500)->nullable();
             $table->timestamp('created_at')->nullable();
             $table->ulid('created_by')->nullable();

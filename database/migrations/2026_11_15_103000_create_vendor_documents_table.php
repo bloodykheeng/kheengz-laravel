@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('vendor_documents', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->ulid('vendor_id');
-            $table->string('type', 40);                            // VendorDocumentType
+            $table->string('type', 40)->comment('National ID (front), National ID (back), Business registration, Other (App\\Enums\\VendorDocumentType)');
             $table->string('file_path');                           // on the private ("local") disk
             $table->string('original_name');
             $table->string('mime_type', 100);

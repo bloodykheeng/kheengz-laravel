@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('name', 150)->index();
             $table->string('slug', 170);                           // homenest.kheengz.com/p/20-litre-basin
             $table->text('description')->nullable();
-            $table->string('status', 20)->default('Draft');        // ProductStatus
+            $table->string('status', 20)->default('Draft')->comment('Draft, Active, Hidden (App\\Enums\\ProductStatus)');
             // Collected at the shop only (too big or fragile for a boda); otherwise delivered or collected.
             $table->boolean('collect_only')->default(false);
             $table->timestamp('published_at')->nullable();         // first put on sale

@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('vendor_users', function (Blueprint $table) {
             $table->ulid('vendor_id');
             $table->ulid('user_id');
-            $table->string('role', 20);                            // VendorMemberRole
+            $table->string('role', 20)->comment('Owner, Staff (App\\Enums\\VendorMemberRole)');
             $table->timestamps();
             $table->ulid('created_by')->nullable();
 

@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('product_attributes', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->string('name', 60)->unique();                  // Colour, Capacity, Gauge
-            $table->string('input_type', 20);                      // AttributeInputType: List, Number, Text
+            $table->string('input_type', 20)->comment('List, Number, Text (App\\Enums\\AttributeInputType)');
             $table->string('unit', 20)->nullable();                // for Number: L, cm, kg, gauge
             $table->string('hint', 160)->nullable();               // shown under the field on the product form
 

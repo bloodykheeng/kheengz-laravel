@@ -25,6 +25,10 @@ return new class extends Migration
             $table->unsignedSmallInteger('position')->default(0);
             // Off: not offered for now, without losing its history.
             $table->boolean('is_active')->default(true);
+            // Off: stock is not counted (made to order, fresh produce sold from what came in today).
+            $table->boolean('track_stock')->default(true);
+            // The shop is told when what is free falls to this (docs/stock.md).
+            $table->decimal('low_stock_at', 12, 3)->nullable();
             $table->timestamps();
 
             $table->index(['product_id', 'position']);
